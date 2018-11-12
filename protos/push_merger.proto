@@ -1,0 +1,53 @@
+// Copyright 2015 gRPC authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+// 머저로 보내는 거.
+package push_merger;
+
+service PushMerger {
+	// signer push her signature to the merger
+	rpc Sig (SigRequest) returns (SigReply) {}
+	rpc Tx (TxRequest) returns (TxReply) {}
+}
+
+// signer push her signature to the merger
+message SigRequest {
+  required string sID = 0
+  required string time = 1
+  required string sig = 2
+}
+
+// Signer doesn't care after giving her signature
+message SigReply {}
+
+
+// Service Endpoint Sends a Tx to the merger
+message TxRequest{
+  required string uID = 0
+  required string time = 1
+  required string txid = 2
+  required string type = 3
+
+  message CONTENTS {
+    required string undefined1 = 0
+  }
+
+  repeated CONTENTS contents = 4
+  required string uSig = 5
+}
+
+// Merger sould Reply something, but I have no idea now
+message TxReply {}

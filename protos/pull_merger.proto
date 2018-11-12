@@ -1,0 +1,90 @@
+/// (Merger>Service Endpoint) 0x
+///
+// Copyright 2015 gRPC authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+// 머저로 보내는 거.
+package pull_merger;
+
+// The greeting service definition.
+service PullMerger {
+	// Pull Merger's tx 
+	rpc Tx (TxRequest) returns (TxReply) {}
+	rpc Broadcast (BroadcastRequest) returns (BroadcastReply) {}
+	rpc SayHello (HelloRequest) returns (HelloReply) {}
+}
+
+// The request message containing the user's name.
+message HelloRequest {
+  string name = 1;
+}
+
+// The response message containing the greetings
+message HelloReply {
+  string message = 1;
+}
+
+// Transaction List: Merger sends these to signers
+message TxRequest {
+  required string sender = 0
+  required string time = 1
+  required string bID = 2
+  required long hgt = 3
+  required long txCnt = 4
+  required string txRoot = 5
+}
+// Signer's Signature
+message TxReply {
+  required string sID = 0
+  required string time = 1
+  required string sig = 2
+}
+
+
+// Broadcast list 
+message BroadcastRequest {
+  required long ver = 0
+  required string cID = 1
+  required string prev = 2
+  required string bID = 3
+  required string time = 4
+  required long size = 5
+  required long hgt = 6
+  required string txroot = 7
+
+  message SSIG {
+    required string sID = 0
+    required string sig = 1
+    required string etc = 2
+  }
+
+  repeated SSIG SSig = 8
+  required string mID = 9
+  required string mSig = 10
+  required string mtn = 11
+  required long txCnt = 12
+
+  message TX {
+    required string txid = 0
+    required string undefined1 = 1
+    required string undefined2 = 2
+  }
+
+  repeated TX tx = 13
+}
+// Broadcast replies empty.
+message BroadcastReply {}
+
