@@ -16,27 +16,43 @@
  *
  */
 
-var PROTO_PATH = __dirname + '/../protos/helloworld.proto';
-
+/* packages */
 var grpc = require('grpc');
 var protoLoader = require('@grpc/proto-loader');
-var packageDefinition = protoLoader.loadSync(
-    PROTO_PATH,
-    {keepCase: true,
-     longs: String,
-     enums: String,
-     defaults: true,
-     oneofs: true
-    });
+
+var PULL_MERGER_PROTO_PATH = __dirname + '/../protos/pull_merger.proto';
+
+// hello world에 있길래 사용함.
+var LOAD_ARGS = {
+	keepCase: true,
+	longs: String,
+	enums: String,
+	defaults: true,
+	oneofs: true
+};
 
 
-var hello_proto = grpc.loadPackageDefinition(packageDefinition).helloworld;
+var pullPackageDefinition = protoLoader.loadSync(
+		PULL_MERGER_PROTO_PATH, LOAD_ARGS
+    );
+
+
+var proto_pull_merger = grpc.loadPackageDefinition(pullPackageDefinition).pull_merger;
 
 /**
- * Implements the SayHello RPC method.
+ * Implements the RPC methods.
  */
 function sayHello(call, callback) {
-  callback(null, {message: 'Hello ' + call.request.name});
+	callback(null, {message: 'Hello ' + call.request.name});
+}
+
+function tx(call, callback) {
+	console.log (call.request);
+	callback(null, {message: '' + call.request.name});
+}
+
+function broadcast(call, callback) {
+	callback(null, { response: "" });
 }
 
 
@@ -46,7 +62,11 @@ function sayHello(call, callback) {
  */
 function main() {
   var server = new grpc.Server();
-  server.addService(hello_proto.Greeter.service, {sayHello: sayHello});
+  server.addService(proto_pull_merger.Pulling.service, {sayHello: sayHello});
+  server.addService(proto_pull_merger.Pulling.service, {Tx: tx});
+  server.addService(proto_pull_merger.Pulling.service, {Broadcast: broadcast});
+
+  // how to create secure credentials?
   server.bind('0.0.0.0:50051', grpc.ServerCredentials.createInsecure());
   server.start();
 }
