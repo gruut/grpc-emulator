@@ -19,7 +19,11 @@
 /* packages */
 var grpc = require('grpc');
 var protoLoader = require('@grpc/proto-loader');
+var winston = require('winston');
+require('date-utils');
+const fs = require('fs');
 
+var logger = getLogger();
 var PULL_MERGER_PROTO_PATH = __dirname + '/../protos/pull_merger.proto';
 
 // hello world에 있길래 사용함.
@@ -72,3 +76,29 @@ function main() {
 }
 
 main();
+
+function getLogger(){
+	const logDir = 'logs';
+	if (!fs.existsSync(logDir)) {
+		fs.mkdirSync(logDir);
+	}
+
+	const tsFormat = () => (new Date()).toLocaleTimeString();
+
+	return new (winston.Logger)({
+    transports: [
+      new (winston.transports.Console)({
+       timestamp: tsFormat,
+       colorize: true,
+       level: 'info'
+     }),
+      new (require('winston-daily-rotate-file'))({
+        level: 'info',
+        filename: `${logDir}/.log`,
+        timestamp: tsFormat,
+        datePattern: 'yyyy-MM-dd',
+        prepend: true,
+      })
+    ]
+  });
+}
