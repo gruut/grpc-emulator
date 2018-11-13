@@ -57,11 +57,25 @@ function sayHello(call, callback) {
 // merger sends his tx to signers
 function tx(call, callback) {
 	var req = buildRequest();
-	callback(null, req);
+
+	// Assign signer - skipped
+	signers.forEach(signer => {
+		signer.write(req);
+	});
 }
 
 function broadcast(call, callback) {
 	callback(null, { response: "" });
+}
+
+var signers = [];
+var certs = [];
+
+function join(call, callback){
+	signers[call.request.nid] = call;	// save call itself!
+	certs[call.request.nid] = call.request.cert;
+
+	// No replies when joining
 }
 
 
@@ -72,6 +86,7 @@ function broadcast(call, callback) {
 function main() {
   var server = new grpc.Server();
   server.addService(proto_pull_merger.Pulling.service, {sayHello: sayHello});
+  server.addService(proto_pull_merger.Pulling.service, {Join: join});
   server.addService(proto_pull_merger.Pulling.service, {Tx: tx});
   server.addService(proto_pull_merger.Pulling.service, {Broadcast: broadcast});
 
@@ -82,6 +97,9 @@ function main() {
 
 main();
 
+/**
+ * Implements Utility Functions
+ */
 function getLogger(){
 	const logDir = 'logs';
 	if (!fs.existsSync(logDir)) {
@@ -134,3 +152,4 @@ function get32Hash(data){
 function getRandomBetween(min, max){
 	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
+
