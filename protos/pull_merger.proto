@@ -17,13 +17,14 @@
 syntax = "proto3";
 
 // 머저로 보내는 거.
-package pull_merger;
+package Merger;
 
 // The greeting service definition.
-service PullMerger {
+service Pulling {
 	// Pull Merger's tx 
 	rpc Join(stream Identity) returns (stream TxRequest) {}
-	rpc Tx (TxRequest) returns (TxReply) {}
+	rpc SigRequest (TxRequest) returns (NoReply) {}
+	rpc SigSend(TxReply) returns (NoReply) {}
 	rpc Broadcast (BroadcastRequest) returns (BroadcastReply) {}
 	rpc SayHello (HelloRequest) returns (HelloReply) {}
 }
@@ -59,7 +60,7 @@ message TxReply {
   required string time = 1
   required string sig = 2
 }
-
+message NoReply {}
 
 // Broadcast list 
 message BroadcastRequest {

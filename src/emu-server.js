@@ -55,7 +55,7 @@ function sayHello(call, callback) {
 }
 
 // merger sends his tx to signers
-function tx(call, callback) {
+function sigRequest(call, callback) {
 	var req = buildRequest();
 
 	// Assign signer - skipped
@@ -78,6 +78,10 @@ function join(call, callback){
 	// No replies when joining
 }
 
+function sigSend(call, callback){
+	// Receives signers' signature
+	// do whatever.
+}
 
 /**
  * Starts an RPC server that receives requests for the Greeter service at the
@@ -85,10 +89,11 @@ function join(call, callback){
  */
 function main() {
   var server = new grpc.Server();
-  server.addService(proto_pull_merger.Pulling.service, {sayHello: sayHello});
-  server.addService(proto_pull_merger.Pulling.service, {Join: join});
-  server.addService(proto_pull_merger.Pulling.service, {Tx: tx});
-  server.addService(proto_pull_merger.Pulling.service, {Broadcast: broadcast});
+  server.addService(proto_pull_merger.Merger.Pulling.service, {sayHello: sayHello});
+  server.addService(proto_pull_merger.Merger.Pulling.service, {Join: join});
+  server.addService(proto_pull_merger.Merger.Pulling.service, {sigRequest: sigRequest});
+  server.addService(proto_pull_merger.Merger.Pulling.service, {sigSend: sigSend});
+  server.addService(proto_pull_merger.Merger.Pulling.service, {Broadcast: broadcast});
 
   // how to create secure credentials?
   server.bind('0.0.0.0:50051', grpc.ServerCredentials.createInsecure());
