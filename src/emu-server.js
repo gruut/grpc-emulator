@@ -105,46 +105,54 @@ main();
 /**
  * Implements Utility Functions
  */
+
+// https://stackoverflow.com/questions/32131287/how-do-i-change-my-node-winston-json-output-to-be-single-line
 function getLogger(){
 	const logDir = 'logs';
 	if (!fs.existsSync(logDir)) {
 		fs.mkdirSync(logDir);
 	}
+
+	const { splat, combine, timestamp, printf } = winston.format;
+
+	// meta param is ensured by splat()
+	const myFormat = printf(({ timestamp, level, message, meta }) => {
+	return `${timestamp};${level};${message};${meta? JSON.stringify(meta) : ''}`;
+	});
+
 	var options = {
 		file: {
 			level: 'info',
 			name: 'server.info',
-			filename: `logs/app.log`,
+			filename: 'logs/app.log',
 			handleExceptions: true,
-			json: true,
 			maxsize: 5242880, // 5MB
 			maxFiles: 100,
-			colorize: true,
 		},
 		errorFile: {
 			level: 'error',
 			name: 'server.error',
-			filename: `logs/error.log`,
+			filename: 'logs/error.log',
 			handleExceptions: true,
-			json: true,
 			maxsize: 5242880, // 5MB
 			maxFiles: 100,
-			colorize: true,
 		},
 		console: {
 			level: 'debug',
 			handleExceptions: true,
-			json: false,
-			colorize: true,
 		}
 	};
 
-	const tsFormat = () => (new Date()).toLocaleTimeString();
-
 	return winston.createLogger({
+		format: combine(
+			timestamp(),
+			splat(),
+			myFormat
+		),
 		transports: [
 			new (winston.transports.File)(options.errorFile),
-			new (winston.transports.File)(options.file)
+			new (winston.transports.File)(options.file),
+			new (winston.transports.Console)(options.console)
 		],
 		exitOnError: false, // do not exit on handled exceptions
 	});
