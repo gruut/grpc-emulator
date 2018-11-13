@@ -22,6 +22,7 @@ var protoLoader = require('@grpc/proto-loader');
 var winston = require('winston');
 require('date-utils');
 const fs = require('fs');
+var crypto = require('crypto');
 
 var logger = getLogger();
 var PULL_MERGER_PROTO_PATH = __dirname + '/../protos/pull_merger.proto';
@@ -35,6 +36,9 @@ var LOAD_ARGS = {
 	oneofs: true
 };
 
+var HEIGHT = 0;
+var MID = 0;
+var BID = 0;
 
 var pullPackageDefinition = protoLoader.loadSync(
 		PULL_MERGER_PROTO_PATH, LOAD_ARGS
@@ -50,9 +54,10 @@ function sayHello(call, callback) {
 	callback(null, {message: 'Hello ' + call.request.name});
 }
 
+// merger sends his tx to signers
 function tx(call, callback) {
-	console.log (call.request);
-	callback(null, {message: '' + call.request.name});
+	var req = buildRequest();
+	callback(null, req);
 }
 
 function broadcast(call, callback) {
@@ -101,4 +106,27 @@ function getLogger(){
       })
     ]
   });
+}
+
+function buildRequest(){
+	var req = new Object();
+	req.time = new Date();
+	req.mid = get64Hash("Merger #" + 1);
+	req.hgt = ++HEIGHT;
+	req.bID = get64Hash(JSON.stringify(req));
+	req.txRoot = getSHA256(JSON.stringify(req));
+
+	return req;
+}
+
+function getSHA256(data){
+	return crypto.createHash('sha256').update(data).digest('base64');
+}
+
+function get64Hash(data){
+	return Buffer.from(substr(crypto.createHash('sha256').update(data).digest('hex'), 0, 16), 'hex').toString('base64');
+}
+
+function getRandomBetween(min, max){
+	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
