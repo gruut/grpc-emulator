@@ -8,7 +8,7 @@
 //
 //     http://www.apache.org/licenses/LICENSE-2.0
 //
-// Unless required by applicable law or agreed to in writing, software
+// Unless by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
@@ -16,83 +16,80 @@
 
 syntax = "proto3";
 
-// 머저로 보내는 거.
 package Merger;
 
 // The greeting service definition.
 service Pulling {
 	// Pull Merger's tx 
-	rpc Join(stream Identity) returns (stream TxRequest) {}
+	rpc Join (stream Identity) returns (stream NoReply) {}
 	rpc SigRequest (TxRequest) returns (NoReply) {}
-	rpc SigSend(TxReply) returns (NoReply) {}
-	rpc Broadcast (BroadcastRequest) returns (BroadcastReply) {}
+	rpc SigSend (TxReply) returns (NoReply) {}
+	rpc Broadcast (BroadcastRequest) returns (NoReply) {}
 	rpc SayHello (HelloRequest) returns (HelloReply) {}
 }
 
 // The request message containing the user's name.
 message HelloRequest {
-  string name = 0;
+  string name = 1;
 }
 
 // The response message containing the greetings
 message HelloReply {
-  string message = 0;
+  string message = 1;
 }
 
 // Signer sends her cert with her nID when joining
-message Join {
-  string nID = 0
-  string cert = 1;
+message Identity {
+  string sID = 1;
+  string cert = 2;
 }
+
+message NoReply {}
 
 // Transaction List: Merger sends these to signers
 message TxRequest {
-  required string time = 0
-  required string mID = 1
-  required string cID = 2
-  required long hgt = 3
-  required string txRoot = 4
+  string time = 1;
+  string mID = 2;
+  string cID = 3;
+  int64 hgt = 4;
+  string txRoot = 5;
 }
 
 // Signer's Signature
 message TxReply {
-  required string sID = 0
-  required string time = 1
-  required string sig = 2
+  string sID = 1;
+  string time = 2;
+  string sig = 3;
 }
-message NoReply {}
 
 // Broadcast list 
 message BroadcastRequest {
-  required long ver = 0
-  required string cID = 1
-  required string prev = 2
-  required string bID = 3
-  required string time = 4
-  required long size = 5
-  required long hgt = 6
-  required string txroot = 7
+  int64 ver = 1;
+  string cID = 2;
+  string prev = 3;
+  string bID = 4;
+  string time = 5;
+  int64 size = 6;
+  int64 hgt = 7;
+  string txroot = 8;
 
   message SSIG {
-    required string sID = 0
-    required string sig = 1
-    required string etc = 2
+    string sID = 1;
+    string sig = 2;
+    string etc = 3;
   }
 
-  repeated SSIG SSig = 8
-  required string mID = 9
-  required string mSig = 10
-  required string mtn = 11
-  required long txCnt = 12
+  SSIG SSig = 9;
+  string mID = 10;
+  string mSig = 11;
+  string mtn = 12;
+  int64 txCnt = 13;
 
   message TX {
-    required string txid = 0
-    required string undefined1 = 1
-    required string undefined2 = 2
+    string txid = 1;
+    string undefined1 = 2;
+    string undefined2 = 3;
   }
 
-  repeated TX tx = 13
+  TX tx = 14;
 }
-// Broadcast replies empty.
-message BroadcastReply {}
-
