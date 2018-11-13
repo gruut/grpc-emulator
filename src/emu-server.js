@@ -45,7 +45,7 @@ var pullPackageDefinition = protoLoader.loadSync(
     );
 
 
-var proto_pull_merger = grpc.loadPackageDefinition(pullPackageDefinition).pull_merger;
+var proto_pull_merger = grpc.loadPackageDefinition(pullPackageDefinition).Merger;
 
 /**
  * Implements the RPC methods.
@@ -65,20 +65,21 @@ function sigRequest(call, callback) {
 }
 
 function broadcast(call, callback) {
-	callback(null, { response: "" });
+	//callback(null, { response: "" });
 }
 
 var signers = [];
 var certs = [];
 
 function join(call, callback){
-	signers[call.request.nid] = call;	// save call itself!
-	certs[call.request.nid] = call.request.cert;
-
+	signers[call.request.sid] = call;	// save call itself!
+	certs[call.request.sid] = call.request.cert;
+	
 	// No replies when joining
+	call.write({});
 }
 
-function sigSend(call, callback){
+function sigResponse(call, callback){
 	// Receives signers' signature
 	// do whatever.
 }
@@ -89,12 +90,11 @@ function sigSend(call, callback){
  */
 function main() {
   var server = new grpc.Server();
-  server.addService(proto_pull_merger.Merger.Pulling.service, {sayHello: sayHello});
-  server.addService(proto_pull_merger.Merger.Pulling.service, {Join: join});
-  server.addService(proto_pull_merger.Merger.Pulling.service, {sigRequest: sigRequest});
-  server.addService(proto_pull_merger.Merger.Pulling.service, {sigSend: sigSend});
-  server.addService(proto_pull_merger.Merger.Pulling.service, {Broadcast: broadcast});
-
+  server.addService(proto_pull_merger.Pulling.service, {  sayHello: sayHello
+  														, join: join
+  														, sigRequest: sigRequest
+  														, sigSend: sigResponse
+  														, broadcast: broadcast });
   // how to create secure credentials?
   server.bind('0.0.0.0:50051', grpc.ServerCredentials.createInsecure());
   server.start();
@@ -110,25 +110,44 @@ function getLogger(){
 	if (!fs.existsSync(logDir)) {
 		fs.mkdirSync(logDir);
 	}
+	var options = {
+		file: {
+			level: 'info',
+			name: 'server.info',
+			filename: `logs/app.log`,
+			handleExceptions: true,
+			json: true,
+			maxsize: 5242880, // 5MB
+			maxFiles: 100,
+			colorize: true,
+		},
+		errorFile: {
+			level: 'error',
+			name: 'server.error',
+			filename: `logs/error.log`,
+			handleExceptions: true,
+			json: true,
+			maxsize: 5242880, // 5MB
+			maxFiles: 100,
+			colorize: true,
+		},
+		console: {
+			level: 'debug',
+			handleExceptions: true,
+			json: false,
+			colorize: true,
+		}
+	};
 
 	const tsFormat = () => (new Date()).toLocaleTimeString();
 
-	return new (winston.Logger)({
-    transports: [
-      new (winston.transports.Console)({
-       timestamp: tsFormat,
-       colorize: true,
-       level: 'info'
-     }),
-      new (require('winston-daily-rotate-file'))({
-        level: 'info',
-        filename: `${logDir}/.log`,
-        timestamp: tsFormat,
-        datePattern: 'yyyy-MM-dd',
-        prepend: true,
-      })
-    ]
-  });
+	return winston.createLogger({
+		transports: [
+			new (winston.transports.File)(options.errorFile),
+			new (winston.transports.File)(options.file)
+		],
+		exitOnError: false, // do not exit on handled exceptions
+	});
 }
 
 function buildRequest(){
