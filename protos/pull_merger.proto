@@ -22,6 +22,7 @@ package pull_merger;
 // The greeting service definition.
 service PullMerger {
 	// Pull Merger's tx 
+	rpc Join(stream Identity) returns (stream TxRequest) {}
 	rpc Tx (TxRequest) returns (TxReply) {}
 	rpc Broadcast (BroadcastRequest) returns (BroadcastReply) {}
 	rpc SayHello (HelloRequest) returns (HelloReply) {}
@@ -29,23 +30,29 @@ service PullMerger {
 
 // The request message containing the user's name.
 message HelloRequest {
-  string name = 1;
+  string name = 0;
 }
 
 // The response message containing the greetings
 message HelloReply {
-  string message = 1;
+  string message = 0;
+}
+
+// Signer sends her cert with her nID when joining
+message Join {
+  string nID = 0
+  string cert = 1;
 }
 
 // Transaction List: Merger sends these to signers
 message TxRequest {
-  required string sender = 0
-  required string time = 1
-  required string bID = 2
+  required string time = 0
+  required string mID = 1
+  required string cID = 2
   required long hgt = 3
-  required long txCnt = 4
-  required string txRoot = 5
+  required string txRoot = 4
 }
+
 // Signer's Signature
 message TxReply {
   required string sID = 0

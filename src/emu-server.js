@@ -112,8 +112,8 @@ function buildRequest(){
 	var req = new Object();
 	req.time = new Date();
 	req.mid = get64Hash("Merger #" + 1);
+	req.cID = get32Hash("Local Chain #1");
 	req.hgt = ++HEIGHT;
-	req.bID = get64Hash(JSON.stringify(req));
 	req.txRoot = getSHA256(JSON.stringify(req));
 
 	return req;
@@ -125,6 +125,10 @@ function getSHA256(data){
 
 function get64Hash(data){
 	return Buffer.from(substr(crypto.createHash('sha256').update(data).digest('hex'), 0, 16), 'hex').toString('base64');
+}
+
+function get32Hash(data){
+	return Buffer.from(substr(crypto.createHash('sha256').update(data).digest('hex'), 0, 8), 'hex').toString('base64');
 }
 
 function getRandomBetween(min, max){
