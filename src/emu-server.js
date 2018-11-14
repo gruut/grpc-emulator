@@ -23,7 +23,6 @@ var winston = require('winston');
 require('date-utils');
 const fs = require('fs');
 var crypto = require('crypto');
-
 var logger = getLogger();
 var PULL_MERGER_PROTO_PATH = __dirname + '/../protos/pull_merger.proto';
 
@@ -36,16 +35,14 @@ var LOAD_ARGS = {
 	oneofs: true
 };
 
-var HEIGHT = 0;
-var MID = 0;
-var BID = 0;
-
 var pullPackageDefinition = protoLoader.loadSync(
 		PULL_MERGER_PROTO_PATH, LOAD_ARGS
     );
 
 
 var proto_pull_merger = grpc.loadPackageDefinition(pullPackageDefinition).Merger;
+
+var HEIGHT = 0;
 
 /**
  * Implements the RPC methods.
@@ -55,13 +52,19 @@ function sayHello(call, callback) {
 }
 
 // merger sends his tx to signers
-function sigRequest(call, callback) {
-	var req = buildRequest();
+function  askSignature() {
+	if(signers.length > 0 ){
+		var req = buildRequest();
+		// Assign signer - skipped
+		var i = 0;
+		signers.forEach(signer => {
+			let call = signer.call;
+			logger.debug("req sig #"+ ++i);
+			call.write(req);
+		});
+	}
 
-	// Assign signer - skipped
-	signers.forEach(signer => {
-		signer.write(req);
-	});
+	setTimeout(askSignature, 2000);
 }
 
 function broadcast(call, callback) {
@@ -69,17 +72,48 @@ function broadcast(call, callback) {
 }
 
 var signers = [];
-var certs = [];
 
-function join(call, callback){
-	signers[call.request.sid] = call;	// save call itself!
-	certs[call.request.sid] = call.request.cert;
-	
+function join(call){
+	call.on("end", (response)=> {
+		for (let i=0; i<signers.length; i++){
+			let signer = signers[i];
+			if (signer.call == call)
+			{
+				logger.debug("The signer " + signer.sID + " has disconnected...--");
+				signers.splice (i, 1);
+				break;
+			}
+			else
+			{
+				logger.error("A signer has left. But it was not able to delete her.");
+			}
+		}
+	})
+
+	call.on("data", (passport)=>{
+		logger.info("A passport has arrived: " + JSON.stringify(passport));
+
+		let obj = new Object();
+		obj.sID = passport.sID;
+		obj.cert = passport.cert;
+		obj.call = call;
+
+		signers.push(obj);
+	});
+
+	call.on("error", (err)=>{
+		logger.error(JSON.stringify(err));
+	});
+
+	if (signers.length == 0 && HEIGHT == 0  )
+		askSignature();
+
 	// No replies when joining
-	call.write({});
 }
 
-function sigResponse(call, callback){
+function collectSignature(call, callback){
+	logger.debug("-- thank you for your support, #" + call.request.sID);
+	// logger.debug(JSON.stringify(call));
 	// Receives signers' signature
 	// do whatever.
 }
@@ -89,15 +123,14 @@ function sigResponse(call, callback){
  * sample server port
  */
 function main() {
-  var server = new grpc.Server();
-  server.addService(proto_pull_merger.Pulling.service, {  sayHello: sayHello
-  														, join: join
-  														, sigRequest: sigRequest
-  														, sigSend: sigResponse
-  														, broadcast: broadcast });
-  // how to create secure credentials?
-  server.bind('0.0.0.0:50051', grpc.ServerCredentials.createInsecure());
-  server.start();
+	var server = new grpc.Server();
+	server.addService(proto_pull_merger.Pulling.service, {  sayHello: sayHello
+															, join: join
+															, sigSend: collectSignature
+															, broadcast: broadcast });
+	// how to create secure credentials?
+	server.bind('0.0.0.0:50051', grpc.ServerCredentials.createInsecure());
+	server.start();
 }
 
 main();
@@ -160,12 +193,13 @@ function getLogger(){
 
 function buildRequest(){
 	var req = new Object();
-	req.time = new Date();
+	req.time = Math.floor(Date.now() / 1000);
 	req.mid = get64Hash("Merger #" + 1);
 	req.cID = get32Hash("Local Chain #1");
 	req.hgt = ++HEIGHT;
 	req.txRoot = getSHA256(JSON.stringify(req));
 
+	logger.debug(JSON.stringify(req));
 	return req;
 }
 
@@ -174,11 +208,11 @@ function getSHA256(data){
 }
 
 function get64Hash(data){
-	return Buffer.from(substr(crypto.createHash('sha256').update(data).digest('hex'), 0, 16), 'hex').toString('base64');
+	return Buffer.from((crypto.createHash('sha256').update(data).digest('hex')).substr(0, 16), 'hex').toString('base64');
 }
 
 function get32Hash(data){
-	return Buffer.from(substr(crypto.createHash('sha256').update(data).digest('hex'), 0, 8), 'hex').toString('base64');
+	return Buffer.from((crypto.createHash('sha256').update(data).digest('hex')).substr(0, 8), 'hex').toString('base64');
 }
 
 function getRandomBetween(min, max){

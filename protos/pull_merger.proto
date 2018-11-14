@@ -21,8 +21,7 @@ package Merger;
 // The greeting service definition.
 service Pulling {
 	// Pull Merger's tx 
-	rpc Join (stream Identity) returns (stream NoReply) {}
-	rpc SigRequest (TxRequest) returns (NoReply) {}
+	rpc Join (stream Identity) returns (stream TxRequest) {}
 	rpc SigSend (TxReply) returns (NoReply) {}
 	rpc Broadcast (BroadcastRequest) returns (NoReply) {}
 	rpc SayHello (HelloRequest) returns (HelloReply) {}
@@ -57,8 +56,8 @@ message TxRequest {
 
 // Signer's Signature
 message TxReply {
-  string sID = 1;
-  string time = 2;
+  string time = 1;
+  string sID = 2;
   string sig = 3;
 }
 
