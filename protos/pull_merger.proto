@@ -1,0 +1,94 @@
+/// (Merger>Service Endpoint) 0x
+///
+// Copyright 2015 gRPC authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package Merger;
+
+// The greeting service definition.
+service Pulling {
+	// Pull Merger's tx 
+	rpc Join (stream Identity) returns (stream TxRequest) {}
+	rpc SigSend (TxReply) returns (NoReply) {}
+	rpc Broadcast (BroadcastRequest) returns (NoReply) {}
+	rpc SayHello (HelloRequest) returns (HelloReply) {}
+}
+
+// The request message containing the user's name.
+message HelloRequest {
+  string name = 1;
+}
+
+// The response message containing the greetings
+message HelloReply {
+  string message = 1;
+}
+
+// Signer sends her cert with her nID when joining
+message Identity {
+  string sID = 1;
+  string cert = 2;
+}
+
+message NoReply {}
+
+// Transaction List: Merger sends these to signers
+message TxRequest {
+  string time = 1;
+  string mID = 2;
+  string cID = 3;
+  int64 hgt = 4;
+  string txRoot = 5;
+}
+
+// Signer's Signature
+message TxReply {
+  string time = 1;
+  string sID = 2;
+  string sig = 3;
+}
+
+// Broadcast list 
+message BroadcastRequest {
+  int64 ver = 1;
+  string cID = 2;
+  string prev = 3;
+  string bID = 4;
+  string time = 5;
+  int64 size = 6;
+  int64 hgt = 7;
+  string txroot = 8;
+
+  message SSIG {
+    string sID = 1;
+    string sig = 2;
+    string etc = 3;
+  }
+
+  SSIG SSig = 9;
+  string mID = 10;
+  string mSig = 11;
+  string mtn = 12;
+  int64 txCnt = 13;
+
+  message TX {
+    string txid = 1;
+    string undefined1 = 2;
+    string undefined2 = 3;
+  }
+
+  TX tx = 14;
+}

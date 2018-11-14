@@ -16,39 +16,206 @@
  *
  */
 
-var PROTO_PATH = __dirname + '/../protos/helloworld.proto';
-
+/* packages */
 var grpc = require('grpc');
 var protoLoader = require('@grpc/proto-loader');
-var packageDefinition = protoLoader.loadSync(
-    PROTO_PATH,
-    {keepCase: true,
-     longs: String,
-     enums: String,
-     defaults: true,
-     oneofs: true
-    });
+var winston = require('winston');
+require('date-utils');
+const fs = require('fs');
+var crypto = require('crypto');
+var logger = getLogger();
+var PULL_MERGER_PROTO_PATH = __dirname + '/../protos/pull_merger.proto';
+
+// hello world에 있길래 사용함.
+var LOAD_ARGS = {
+	keepCase: true,
+	longs: String,
+	enums: String,
+	defaults: true,
+	oneofs: true
+};
+
+var pullPackageDefinition = protoLoader.loadSync(
+		PULL_MERGER_PROTO_PATH, LOAD_ARGS
+    );
 
 
-var hello_proto = grpc.loadPackageDefinition(packageDefinition).helloworld;
+var proto_pull_merger = grpc.loadPackageDefinition(pullPackageDefinition).Merger;
+
+var HEIGHT = 0;
 
 /**
- * Implements the SayHello RPC method.
+ * Implements the RPC methods.
  */
 function sayHello(call, callback) {
-  callback(null, {message: 'Hello ' + call.request.name});
+	callback(null, {message: 'Hello ' + call.request.name});
 }
 
+// merger sends his tx to signers
+function  askSignature() {
+	if(signers.length > 0 ){
+		var req = buildRequest();
+		// Assign signer - skipped
+		var i = 0;
+		signers.forEach(signer => {
+			let call = signer.call;
+			logger.debug("req sig #"+ ++i);
+			call.write(req);
+		});
+	}
+
+	setTimeout(askSignature, 2000);
+}
+
+function broadcast(call, callback) {
+	//callback(null, { response: "" });
+}
+
+var signers = [];
+
+function join(call){
+	call.on("end", (response)=> {
+		for (let i=0; i<signers.length; i++){
+			let signer = signers[i];
+			if (signer.call == call)
+			{
+				logger.debug("The signer " + signer.sID + " has disconnected...--");
+				signers.splice (i, 1);
+				break;
+			}
+			else
+			{
+				logger.error("A signer has left. But it was not able to delete her.");
+			}
+		}
+	})
+
+	call.on("data", (passport)=>{
+		logger.info("A passport has arrived: " + JSON.stringify(passport));
+
+		let obj = new Object();
+		obj.sID = passport.sID;
+		obj.cert = passport.cert;
+		obj.call = call;
+
+		signers.push(obj);
+	});
+
+	call.on("error", (err)=>{
+		logger.error(JSON.stringify(err));
+	});
+
+	if (signers.length == 0 && HEIGHT == 0  )
+		askSignature();
+
+	// No replies when joining
+}
+
+function collectSignature(call, callback){
+	logger.debug("-- thank you for your support, #" + call.request.sID);
+	// logger.debug(JSON.stringify(call));
+	// Receives signers' signature
+	// do whatever.
+}
 
 /**
  * Starts an RPC server that receives requests for the Greeter service at the
  * sample server port
  */
 function main() {
-  var server = new grpc.Server();
-  server.addService(hello_proto.Greeter.service, {sayHello: sayHello});
-  server.bind('0.0.0.0:50051', grpc.ServerCredentials.createInsecure());
-  server.start();
+	var server = new grpc.Server();
+	server.addService(proto_pull_merger.Pulling.service, {  sayHello: sayHello
+															, join: join
+															, sigSend: collectSignature
+															, broadcast: broadcast });
+	// how to create secure credentials?
+	server.bind('0.0.0.0:50051', grpc.ServerCredentials.createInsecure());
+	server.start();
 }
 
 main();
+
+/**
+ * Implements Utility Functions
+ */
+
+// https://stackoverflow.com/questions/32131287/how-do-i-change-my-node-winston-json-output-to-be-single-line
+function getLogger(){
+	const logDir = 'logs';
+	if (!fs.existsSync(logDir)) {
+		fs.mkdirSync(logDir);
+	}
+
+	const { splat, combine, timestamp, printf } = winston.format;
+
+	// meta param is ensured by splat()
+	const myFormat = printf(({ timestamp, level, message, meta }) => {
+	return `${timestamp};${level};${message};${meta? JSON.stringify(meta) : ''}`;
+	});
+
+	var options = {
+		file: {
+			level: 'info',
+			name: 'server.info',
+			filename: 'logs/app.log',
+			handleExceptions: true,
+			maxsize: 5242880, // 5MB
+			maxFiles: 100,
+		},
+		errorFile: {
+			level: 'error',
+			name: 'server.error',
+			filename: 'logs/error.log',
+			handleExceptions: true,
+			maxsize: 5242880, // 5MB
+			maxFiles: 100,
+		},
+		console: {
+			level: 'debug',
+			handleExceptions: true,
+		}
+	};
+
+	return winston.createLogger({
+		format: combine(
+			timestamp(),
+			splat(),
+			myFormat
+		),
+		transports: [
+			new (winston.transports.File)(options.errorFile),
+			new (winston.transports.File)(options.file),
+			new (winston.transports.Console)(options.console)
+		],
+		exitOnError: false, // do not exit on handled exceptions
+	});
+}
+
+function buildRequest(){
+	var req = new Object();
+	req.time = Math.floor(Date.now() / 1000);
+	req.mid = get64Hash("Merger #" + 1);
+	req.cID = get32Hash("Local Chain #1");
+	req.hgt = ++HEIGHT;
+	req.txRoot = getSHA256(JSON.stringify(req));
+
+	logger.debug(JSON.stringify(req));
+	return req;
+}
+
+function getSHA256(data){
+	return crypto.createHash('sha256').update(data).digest('base64');
+}
+
+function get64Hash(data){
+	return Buffer.from((crypto.createHash('sha256').update(data).digest('hex')).substr(0, 16), 'hex').toString('base64');
+}
+
+function get32Hash(data){
+	return Buffer.from((crypto.createHash('sha256').update(data).digest('hex')).substr(0, 8), 'hex').toString('base64');
+}
+
+function getRandomBetween(min, max){
+	return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
