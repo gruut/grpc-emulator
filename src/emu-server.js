@@ -43,6 +43,8 @@ var pullPackageDefinition = protoLoader.loadSync(
 var proto_pull_merger = grpc.loadPackageDefinition(pullPackageDefinition).Merger;
 
 var HEIGHT = 0;
+var REQ_NUM = 0;
+var RES_NUM = 0;
 var signers = [];
 
 /**
@@ -96,7 +98,11 @@ function  askSignature() {
 }
 
 function collectSignature(call, callback){
-	logger.info("signature received. signed by #" + call.request.sID);
+	++RES_NUM;
+	// logger.debug("-- thank you for your support, #" + call.request.sID);
+	// logger.debug(JSON.stringify(call));
+	// Receives signers' signature
+	// do whatever.
 }
 
 /**
@@ -190,7 +196,8 @@ function buildRequest(){
 	req.hgt = ++HEIGHT;
 	req.txRoot = getSHA256(JSON.stringify(req));
 
-	logger.debug(JSON.stringify(req));
+	logger.info ("block height #" + HEIGHT);
+	//logger.debug(JSON.stringify(req));
 	return req;
 }
 
@@ -210,3 +217,6 @@ function getRandomBetween(min, max){
 	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function reportReqResStatus(){
+	logger.info(`Res/Req Ratio = ${RES_NUM}/${REQ_NUM} = ${parseFloat(RES_NUM/REQ_NUM).toFixed(2)}`);
+}

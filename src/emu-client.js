@@ -84,7 +84,7 @@ function standBy(client, p_num){
  * Do Details
  */
 function doSign(block_header){
-	logger.debug ("... I need to sign on hgt " + block_header.hgt);
+	//logger.debug ("... I need to sign on hgt " + block_header.hgt);
 	let my_sig = genSig(passport, block_header);
 	if(channel)
 	{
