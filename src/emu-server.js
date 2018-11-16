@@ -43,80 +43,7 @@ var pullPackageDefinition = protoLoader.loadSync(
 var proto_pull_merger = grpc.loadPackageDefinition(pullPackageDefinition).Merger;
 
 var HEIGHT = 0;
-
-/**
- * Implements the RPC methods.
- */
-function sayHello(call, callback) {
-	callback(null, {message: 'Hello ' + call.request.name});
-}
-
-// merger sends his tx to signers
-function  askSignature() {
-	if(signers.length > 0 ){
-		var req = buildRequest();
-		// Assign signer - skipped
-		var i = 0;
-		signers.forEach(signer => {
-			let call = signer.call;
-			logger.debug("req sig #"+ ++i);
-			call.write(req);
-		});
-	}
-
-	setTimeout(askSignature, 2000);
-}
-
-function broadcast(call, callback) {
-	//callback(null, { response: "" });
-}
-
 var signers = [];
-
-function join(call){
-	call.on("end", (response)=> {
-		for (let i=0; i<signers.length; i++){
-			let signer = signers[i];
-			if (signer.call == call)
-			{
-				logger.debug("The signer " + signer.sID + " has disconnected...--");
-				signers.splice (i, 1);
-				break;
-			}
-			else
-			{
-				logger.error("A signer has left. But it was not able to delete her.");
-			}
-		}
-	})
-
-	call.on("data", (passport)=>{
-		logger.info("A passport has arrived: " + JSON.stringify(passport));
-
-		let obj = new Object();
-		obj.sID = passport.sID;
-		obj.cert = passport.cert;
-		obj.call = call;
-
-		signers.push(obj);
-	});
-
-	call.on("error", (err)=>{
-		logger.error(JSON.stringify(err));
-	});
-
-	if (signers.length == 0 && HEIGHT == 0  )
-		askSignature();
-
-	// No replies when joining
-}
-
-function collectSignature(call, callback){
-	logger.debug("-- thank you for your support, #" + call.request.sID);
-	// logger.debug(JSON.stringify(call));
-	// Receives signers' signature
-	// do whatever.
-}
 
 /**
  * Starts an RPC server that receives requests for the Greeter service at the
@@ -124,10 +51,9 @@ function collectSignature(call, callback){
  */
 function main() {
 	var server = new grpc.Server();
-	server.addService(proto_pull_merger.Pulling.service, {  sayHello: sayHello
-															, join: join
-															, sigSend: collectSignature
-															, broadcast: broadcast });
+	server.addService(proto_pull_merger.Pulling.service, { join: join
+														 , sigSend: collectSignature
+														});
 	// how to create secure credentials?
 	server.bind('0.0.0.0:50051', grpc.ServerCredentials.createInsecure());
 	server.start();
@@ -136,9 +62,74 @@ function main() {
 main();
 
 /**
+ * Implements the RPC methods.
+ */
+// When the channel has created, assign function on each events.
+function join(call){
+	call.on("end", ()=>{
+		removeSigner (call);
+	});
+
+	call.on("data", (response)=>{
+		addSigner(response, call);
+	});
+
+	call.on("error", (err)=>{
+		logger.error(JSON.stringify(err)); 
+	});
+
+	if (signers.length == 0 && HEIGHT == 0  )
+		askSignature();
+}
+
+function  askSignature() {
+	if(signers.length > 0 ){
+		var req = buildRequest();
+
+		// Assign signers - skipped
+		signers.forEach(signer => {
+			signer.call.write(req);
+		});
+	}
+
+	setTimeout(askSignature, 2000);
+}
+
+function collectSignature(call, callback){
+	logger.info("signature received. signed by #" + call.request.sID);
+}
+
+/**
+ * Do Details
+ */
+function removeSigner(call){
+	for (let i=0; i<signers.length; i++){
+		let signer = signers[i];
+		if (signer.call == call){
+			logger.info("The signer " + signer.sID + " has disconnected...--");
+			signers.splice (i, 1);
+			break;
+		}
+		else{
+			logger.error("A signer has left. But it was not able to delete her.");
+		}
+	}
+}
+
+function addSigner(passport, call){
+	logger.info("A signer's passport has arrived: sID = " + passport.sID);
+
+	let obj = new Object();
+	obj.sID = passport.sID;
+	obj.cert = passport.cert;
+	obj.call = call;
+
+	signers.push(obj);
+}
+
+/**
  * Implements Utility Functions
  */
-
 // https://stackoverflow.com/questions/32131287/how-do-i-change-my-node-winston-json-output-to-be-single-line
 function getLogger(){
 	const logDir = 'logs';
