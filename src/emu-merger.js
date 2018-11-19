@@ -20,6 +20,7 @@
 var grpc = require('grpc');
 var protoLoader = require('@grpc/proto-loader');
 var tools = require("./mytools.js");
+var common = require("./common.js");
 var logger = tools.getLogger('merger');
 
 var PULL_MERGER_PROTO_PATH = __dirname + '/../protos/pull_merger.proto';
@@ -84,6 +85,8 @@ function  askSignature() {
 	if(signers.length > 0 ){
 		var req = buildRequest();
 		logger.info(" req signature has ready #" + req.hgt);
+
+		var r = common.buildMsg(common.MSG_TYPE.MSG_JOIN, req, "E-MERGER");
 
 		// Assign signers - skipped
 		signers.forEach(signer => {
