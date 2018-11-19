@@ -5,7 +5,6 @@
 var winston = require('winston');
 require('date-utils');
 const fs = require('fs');
-var lz4 = require('lz4');
 var crypto = require('crypto');
 
 // https://stackoverflow.com/questions/32131287/how-do-i-change-my-node-winston-json-output-to-be-single-line
@@ -60,6 +59,14 @@ var getLogger = function(type_name){
 	});
 };
 
+var getHMAC = function(data){
+	const secret = '0x0000000000000000000000000000000000000000000000000000000000000000';
+	const hash = crypto.createHmac('sha256', Buffer.from(secret, 'hex'))
+	                   .update(data)
+	                   .digest('hex');
+	return hash;
+}
+
 var getSHA256 = function(data){
 	return crypto.createHash('sha256').update(data).digest('base64');
 };
@@ -78,6 +85,7 @@ var getRandomBetween = function(min, max){
 
 var self = module.exports = {
 	getLogger : getLogger,
+	getHMAC : getHMAC,
 	getSHA256 : getSHA256,
 	get64Hash : get64Hash,
 	get32Hash : get32Hash,
