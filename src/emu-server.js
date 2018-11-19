@@ -19,11 +19,9 @@
 /* packages */
 var grpc = require('grpc');
 var protoLoader = require('@grpc/proto-loader');
-var winston = require('winston');
-require('date-utils');
-const fs = require('fs');
-var crypto = require('crypto');
-var logger = getLogger();
+var tools = require("./mytools.js");
+var logger = tools.getLogger('merger');
+
 var PULL_MERGER_PROTO_PATH = __dirname + '/../protos/pull_merger.proto';
 
 // hello world에 있길래 사용함.
@@ -78,13 +76,14 @@ function join(call){
 		logger.error(JSON.stringify(err)); 
 	});
 
-	if (signers.length == 0 && HEIGHT == 0  )
+	if (signers.length == 0 && HEIGHT == 0 )
 		askSignature();
 }
 
 function  askSignature() {
 	if(signers.length > 0 ){
 		var req = buildRequest();
+		logger.info(" req signature has ready #" + req.hgt);
 
 		// Assign signers - skipped
 		signers.forEach(signer => {
@@ -127,86 +126,13 @@ function addSigner(passport, call){
 	signers.push(obj);
 }
 
-/**
- * Implements Utility Functions
- */
-// https://stackoverflow.com/questions/32131287/how-do-i-change-my-node-winston-json-output-to-be-single-line
-function getLogger(){
-	const logDir = 'logs';
-	if (!fs.existsSync(logDir)) {
-		fs.mkdirSync(logDir);
-	}
-
-	const { splat, combine, timestamp, printf } = winston.format;
-
-	// meta param is ensured by splat()
-	const myFormat = printf(({ timestamp, level, message, meta }) => {
-	return `${timestamp};${level};${message};${meta? JSON.stringify(meta) : ''}`;
-	});
-
-	var options = {
-		file: {
-			level: 'info',
-			name: 'server.info',
-			filename: 'logs/app.log',
-			handleExceptions: true,
-			maxsize: 5242880, // 5MB
-			maxFiles: 100,
-		},
-		errorFile: {
-			level: 'error',
-			name: 'server.error',
-			filename: 'logs/error.log',
-			handleExceptions: true,
-			maxsize: 5242880, // 5MB
-			maxFiles: 100,
-		},
-		console: {
-			level: 'debug',
-			handleExceptions: true,
-		}
-	};
-
-	return winston.createLogger({
-		format: combine(
-			timestamp(),
-			splat(),
-			myFormat
-		),
-		transports: [
-			new (winston.transports.File)(options.errorFile),
-			new (winston.transports.File)(options.file),
-			new (winston.transports.Console)(options.console)
-		],
-		exitOnError: false, // do not exit on handled exceptions
-	});
-}
-
 function buildRequest(){
 	var req = new Object();
 	req.time = Math.floor(Date.now() / 1000);
-	req.mid = get64Hash("Merger #" + 1);
-	req.cID = get32Hash("Local Chain #1");
+	req.mid = tools.get64Hash("Merger #" + 1);
+	req.cID = tools.get32Hash("Local Chain #1");
 	req.hgt = ++HEIGHT;
-	req.txRoot = getSHA256(JSON.stringify(req));
+	req.txRoot = tools.getSHA256(JSON.stringify(req));
 
-	logger.debug(JSON.stringify(req));
 	return req;
-}
-
-function getSHA256(data){
-	return crypto.createHash('sha256').update(data).digest('base64');
-}
-
-function get64Hash(data){
-	return Buffer.from((crypto.createHash('sha256').update(data).digest('hex')).substr(0, 16), 'hex').toString('base64');
-}
-
-function get32Hash(data){
-	return Buffer.from((crypto.createHash('sha256').update(data).digest('hex')).substr(0, 8), 'hex').toString('base64');
-}
-
-function getRandomBetween(min, max){
-	return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
+};
