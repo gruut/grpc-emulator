@@ -19,11 +19,8 @@
 /* packages */
 var grpc = require('grpc');
 var protoLoader = require('@grpc/proto-loader');
-var winston = require('winston');
-require('date-utils');
-const fs = require('fs');
-var crypto = require('crypto');
-var logger = getLogger();
+var tools = require("./mytools.js");
+var logger = tools.getLogger('signer');
 
 var PULL_MERGER_PROTO_PATH = __dirname + '/../protos/pull_merger.proto';
 
@@ -96,14 +93,14 @@ function genSig(passport, block_header){
 	var res = new Object();
 	res.time = Math.floor(Date.now() / 1000);
 	res.sID = passport.sID;
-	res.sig = get32Hash(JSON.stringify(block_header) + passport.sID);
+	res.sig = tools.get32Hash(JSON.stringify(block_header) + passport.sID);
 
 	return res;
 }
 
 function getMyPassport(p_num){
 	let pp = new Object();
-	pp.sID = get64Hash("Signer # " + ((p_num != 0 )? p_num : getRandomBetween(0,1000000)));
+	pp.sID = tools.get64Hash("Signer # " + ((p_num != 0 )? p_num : tools.getRandomBetween(0,1000000)));
 	// fake pem
 	pp.cert = `-----BEGIN RSA PRIVATE KEY-----
 MI12ogIBAAKCAQEAsJAu5Db2Sk/JZPkN2fYshohemy+B5AfRANGz0wUMl3YJeV0pGby0680J19Kn
@@ -129,73 +126,4 @@ mBKw8xWG44/udO72Uqda6ktK537iHHP33/zNucgnka2/sofHmCsNHkHx9Gt6+LJ6Gv37PmJfmf0s
 sdfkipqi0jpin2iiHHio23hruofboAsUSMJRNV5of0fhygnXMLwzD9HgksoscaWOlUw=
 -----END RSA PRIVATE KEY-----`;
 	return pp;
-}
-
-
-
-/**
- * Implements Utility Functions
- */
-// https://stackoverflow.com/questions/32131287/how-do-i-change-my-node-winston-json-output-to-be-single-line
-function getLogger(){
-	const logDir = 'logs';
-	if (!fs.existsSync(logDir)) {
-		fs.mkdirSync(logDir);
-	}
-
-	const { splat, combine, timestamp, printf } = winston.format;
-
-	// meta param is ensured by splat()
-	const myFormat = printf(({ timestamp, level, message, meta }) => {
-	return `${timestamp};${level};${message};${meta? JSON.stringify(meta) : ''}`;
-	});
-
-	var options = {
-		file: {
-			level: 'info',
-			name: 'server.info',
-			filename: 'logs/client-app.log',
-			handleExceptions: true,
-			maxsize: 5242880, // 5MB
-			maxFiles: 100,
-		},
-		errorFile: {
-			level: 'error',
-			name: 'server.error',
-			filename: 'logs/client-error.log',
-			handleExceptions: true,
-			maxsize: 5242880, // 5MB
-			maxFiles: 100,
-		},
-		console: {
-			level: 'debug',
-			handleExceptions: true,
-		}
-	};
-
-	return winston.createLogger({
-		format: combine(
-			timestamp(),
-			splat(),
-			myFormat
-		),
-		transports: [
-			new (winston.transports.File)(options.errorFile),
-			new (winston.transports.File)(options.file),
-			new (winston.transports.Console)(options.console)
-		],
-		exitOnError: false, // do not exit on handled exceptions
-	});
-}
-
-function get64Hash(data){
-	return Buffer.from((crypto.createHash('sha256').update(data).digest('hex')).substr(0, 16), 'hex').toString('base64');
-}
-
-function get32Hash(data){
-	return Buffer.from((crypto.createHash('sha256').update(data).digest('hex')).substr(0, 8), 'hex').toString('base64');
-}
-
-function getRandomBetween(min, max){
-	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
