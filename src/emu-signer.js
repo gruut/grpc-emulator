@@ -20,6 +20,7 @@
 var grpc = require('grpc');
 var protoLoader = require('@grpc/proto-loader');
 var tools = require("./mytools.js");
+var common = require("./common.js");
 var logger = tools.getLogger('signer');
 
 var PULL_MERGER_PROTO_PATH = __dirname + '/../protos/pull_merger.proto';
@@ -47,7 +48,7 @@ var passport = null;
  * Starts client - the signer
  */
 function main() {
-	const REMOTE_SERVER = '0.0.0.0:50051';
+	const REMOTE_SERVER = '165.246.196.48:50051';
 	client = new proto_pull_merger.Pulling(REMOTE_SERVER,
                                        grpc.credentials.createInsecure());
 
@@ -64,9 +65,10 @@ main();
  */
 function standBy(client, p_num){
 	passport = getMyPassport(p_num);
-
 	channel = client.join();
-	channel.write(passport);
+	var pp_pack = common.pack(common.MSG_TYPE.MSG_JOIN, passport, passport.sID);
+	const msg = common.protobuf_msg_serializer(PULL_MERGER_PROTO_PATH, "Merger.Identity", pp_pack);
+	channel.write(msg);
 
 	channel.on("data", doSign);
 	channel.on("end", ()=>{
@@ -80,12 +82,17 @@ function standBy(client, p_num){
 /**
  * Do Details
  */
-function doSign(block_header){
-	logger.debug ("... I need to sign on hgt " + block_header.hgt);
-	let my_sig = genSig(passport, block_header);
+function doSign(buffered_response){
+	let sig_msg = common.unpack(buffered_response.message);
+	console.log(JSON.stringify(sig_msg));
+	logger.debug ("... I need to sign on hgt " + sig_msg.hgt);
+	let my_sig = genSig(passport, sig_msg);
 	if(channel)
 	{
-		client.SigSend(my_sig, res => {});
+		let sig_pack = common.pack(common.MSG_TYPE.MSG_SSIG, my_sig, passport.sID);
+		const msg = common.protobuf_msg_serializer(PULL_MERGER_PROTO_PATH, "Merger.TxReply", sig_pack);
+
+		client.SigSend(msg, res => {});
 	}
 }
 
@@ -102,28 +109,6 @@ function getMyPassport(p_num){
 	let pp = new Object();
 	pp.sID = tools.get64Hash("Signer # " + ((p_num != 0 )? p_num : tools.getRandomBetween(0,1000000)));
 	// fake pem
-	pp.cert = `-----BEGIN RSA PRIVATE KEY-----
-MI12ogIBAAKCAQEAsJAu5Db2Sk/JZPkN2fYshohemy+B5AfRANGz0wUMl3YJeV0pGby0680J19Kn
-s1zM2F4NzX+6cRXIXhoK83BbWTSPu3EfNWtdbM29YmLdYY2nvEN5oImwYy1Qv27CIx9dXU6myFfL
-O4DF3512145F9/YqPw1NVul9nrR/pEbsrnTKVUGbFCslM8TbfD5a5ZQa6ovWHVrUcOB0X6OfYhRX
-AxLFe4KtfCs/8mVA0YPuk1Kb4o35oIEe9deLDE5XA7NNelk9CfNL92l1pbiRQzdVYhin4U30/ImN
-8QqjeyRMXVlJRuPm0agS8YHKRdzfbdfglmkl5Z/66pSXAPpy3KWmVwIDAQABAoIBAGlVe0QXLhPj
-Saj9lC/mV2XjUV2PmBQsPZoZgQhxSLPLbZeD5pM+K0lJx4eEWxv8TxD9+4oPm3D/p8vMCaB19Wlg
-nCcdM5sw9Em67G0as0700ashhmReAGcKj9PFBfjiK1cRJxr6lXpoNjDqAi2aua9Wopl/HBavsYvO
-7x9YWLcyYCi0aemTu56c/6SWpu1Ev1KmUfb7dg2340afkkb4M0ZGH+pzeTE9FWD4RCiqhcMDrCQV
-uF78QynLLYgU1ni/aaaaaaaaaaaaaaaaaaacsJ0uOAWLMk193RdhrOYemSRuZCPL8t0qC3jsrM8m
-CHt4IzqpNPIcSFoT5lVMW6p+iGECgYEA/aUwxKWn3dvRy0frcfb6UubmLtsox34r3vWWIpNbEFQ4
-YMC06OuUo4Jdm+ohm/lInDh0OQTYLvDOfhksM4Pus6k7/25V0LmP9ZiPS5f4AoPn4Gt7TEkdZrnm
-xmwb3DaRkfKI4mNYrejHlDQH7dIZHlBwu0yas11145lk5pgTRokCgYEAsjPM9WOQpCJzfLpTfT/6
-Hpq0JVTizYyT/63EsTYAdDmxgjrJw1RFAp6w0/mv1Lg6OJq6RYVNVcG1zuVeJpr60Pe94JgVCIC9
-OMoZ+p14tl3qqLbLNXHTuFep7mynkFvzOmLTRGGMoyAqadsfasdfnjSpInrdsduPPjfbtjGETd8C
-gYAQWBenZEFH44VGQxEh29dPhj9o34hmKnQrPsn441sa1fadf4tQwvVl/92GUXTu9wY9wsmCbxR7
-GdtEdtzJSQQVoZ8TG4n+FCb5nWYGafl6OAO2C1b7mG6DkxES0h6Ndxq0O9ukMuCg/DH4E846/eHO
-eUJ6Xzmr7Cx5njZnKH99eQKBgBEmQQxAh7P0CM8xE0XTeVsdafasklfnjkDjZTF0s/h7cOTKiY49
-asdfasdkfmkladngklankdgakldnfklasnfasdfasdfadfaMrFFdBDfws9uGs+mxyaFM9nKWjE2t
-O6wbxJ8pECLGvraSiFVIJqxfZnOGBX3PVmqzb3aKL2RbAoGAUfJqrxwNm7ZONB4qKUBCY1M1mJWk
-mBKw8xWG44/udO72Uqda6ktK537iHHP33/zNucgnka2/sofHmCsNHkHx9Gt6+LJ6Gv37PmJfmf0s
-sdfkipqi0jpin2iiHHio23hruofboAsUSMJRNV5of0fhygnXMLwzD9HgksoscaWOlUw=
------END RSA PRIVATE KEY-----`;
+	pp.cert ="..................cert............................";
 	return pp;
 }

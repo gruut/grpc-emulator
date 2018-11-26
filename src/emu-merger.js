@@ -36,8 +36,7 @@ var LOAD_ARGS = {
 
 var pullPackageDefinition = protoLoader.loadSync(
 		PULL_MERGER_PROTO_PATH, LOAD_ARGS
-    );
-
+);
 
 var proto_pull_merger = grpc.loadPackageDefinition(pullPackageDefinition).Merger;
 
@@ -69,7 +68,8 @@ function join(call){
 		removeSigner (call);
 	});
 
-	call.on("data", (response)=>{
+	call.on("data", (buffered_response)=>{
+		let response = common.unpack(buffered_response.message);
 		addSigner(response, call);
 	});
 
@@ -81,16 +81,16 @@ function join(call){
 		askSignature();
 }
 
-function  askSignature() {
+function askSignature() {
 	if(signers.length > 0 ){
 		var req = buildRequest();
 		logger.info(" req signature has ready #" + req.hgt);
 
-		var r = common.buildMsg(common.MSG_TYPE.MSG_JOIN, req, "E-MERGER");
+		var req_pack = common.pack(common.MSG_TYPE.MSG_REQ_SSIG, req, tools.get64Hash("MERGER-0"));
+		const msg = common.protobuf_msg_serializer(PULL_MERGER_PROTO_PATH, "Merger.TxRequest", req_pack);
 
-		// Assign signers - skipped
 		signers.forEach(signer => {
-			signer.call.write(req);
+			signer.call.write(msg);
 		});
 	}
 
@@ -98,7 +98,8 @@ function  askSignature() {
 }
 
 function collectSignature(call, callback){
-	logger.info("signature received. signed by #" + call.request.sID);
+	let sig_contents = common.unpack(call.request.message);
+	logger.info("signature [" + sig_contents.sig + "] has received. signed by #" + sig_contents.sID);
 }
 
 /**
@@ -119,11 +120,16 @@ function removeSigner(call){
 }
 
 function addSigner(passport, call){
-	logger.info("A signer's passport has arrived: sID = " + passport.sID);
-
 	let obj = new Object();
-	obj.sID = passport.sID;
-	obj.cert = passport.cert;
+	try{
+		logger.info("A signer's passport has arrived: sID = " + passport.sID);
+		obj.sID = passport.sID;
+		obj.cert = passport.cert;
+	}
+	catch (e){
+		obj.sID = "tmp sid";
+		obj.cert = "tmp cert";
+	}
 	obj.call = call;
 
 	signers.push(obj);
