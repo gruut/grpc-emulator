@@ -72,11 +72,11 @@ var getSHA256 = function(data){
 };
 
 var get64Hash = function(data){
-	return Buffer.from((crypto.createHash('sha256').update(data).digest('hex')).substr(0, 16), 'hex').toString('base64');
+	return crypto.createHash('sha256').update(data).digest('hex').substr(0, 16);
 };
 
 var get32Hash = function(data){
-	return Buffer.from((crypto.createHash('sha256').update(data).digest('hex')).substr(0, 8), 'hex').toString('base64');
+	return crypto.createHash('sha256').update(data).digest('hex').substr(0, 8);
 };
 
 var getRandomBetween = function(min, max){
