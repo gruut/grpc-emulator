@@ -27,24 +27,17 @@ service Pulling {
 
 // Signer sends her cert with her nID when joining
 message Identity {
-  string sID = 1;
-  string cert = 2;
+  bytes message = 1;
 }
 
 message NoReply {}
 
 // Transaction List: Merger sends these to signers
 message TxRequest {
-  string time = 1;
-  string mID = 2;
-  string cID = 3;
-  int64 hgt = 4;
-  string txRoot = 5;
+  bytes message = 1;
 }
 
 // Signer's Signature
 message TxReply {
-  string time = 1;
-  string sID = 2;
-  string sig = 3;
+  bytes message = 1;
 }
