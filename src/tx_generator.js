@@ -44,6 +44,7 @@ var client = null;
 var p_num = 0;
 var txid = 0;
 
+
 /**
  * Starts client - the signer
  */
@@ -87,16 +88,44 @@ function genTx(){
 
     let rID = tools.get64Hash("TX GENERATOR # " + p_num );
     let ts = tools.getTimestamp();
-    let data = "Data #" + txid;
-    let datID = tools.get64Hash(data + txid);
 
     var tx = new Object();
 	tx.txid = tools.getSHA256(rID + txid);
     tx.time = ts;
     tx.rID = rID;
     tx.type = "digests";
-    tx.content = [ rID, ts, datID, data ];
-    tx.rSig = tools.signRSA(data);
+    tx.content = genContents(rID, ts);
+    tx.rSig = tools.signRSA(JSON.stringify(tx.content));
 
 	return tx;
+}
+
+function genContents(rID, ts){
+    let contents = [];
+    let n = tools.getRandomBetween(0,10);
+    let item;
+    let i;
+    switch (n){
+        case 2:
+        case 3:
+        case 10:
+        for(i=0; i<n; i++){
+            addSingleContent(contents, rID, ts, i);
+        }
+        break;
+        default:
+            addSingleContent(contents, rID, ts, 0);
+        break;
+    }
+
+    return contents;
+}
+
+function addSingleContent(contents, rID, ts, n){
+    let data = "Data #" + txid + ((n==0)? "" : "-" + n);
+    let dataID = tools.get64Hash(data + txid);
+    contents.push(rID);
+    contents.push(ts);
+    contents.push(dataID);
+    contents.push(data);
 }
