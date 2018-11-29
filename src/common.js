@@ -12,7 +12,8 @@ const MAC_LENGTH = 64;
 const MSG_TYPE = {
     MSG_JOIN: 0x54,
     MSG_REQ_SSIG: 0xB2,
-    MSG_SSIG: 0xB3
+	MSG_SSIG: 0xB3,
+	MSG_TX: 0xB1
 };
 const MAX_MSG_LENGTH = 4 * 1024 * 1024; /* temporary, 4MB */
 

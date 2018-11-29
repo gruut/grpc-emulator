@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package grpc_se;
+
+service  GruutSeService {
+   rpc transaction(GrpcMsgTX) returns (Nothing) {}
+}
+message GrpcMsgTX {
+   bytes message = 1;
+}
+message Nothing {
+   bytes message = 1;
+}
