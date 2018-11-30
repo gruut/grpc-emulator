@@ -47,7 +47,10 @@ var txid = 0;
  */
 function main() {
     argv = tools.argvParser(process.argv);
-    if( !argv.ok) return false;
+    if( !argv.ok) {
+		tools.printHowToUse(process_argv);
+		return false;
+	}
 
     const REMOTE_SERVER = argv.addr + ":" + argv.port;
 	client = new proto_tx.GruutSeService(REMOTE_SERVER,

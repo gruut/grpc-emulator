@@ -134,7 +134,6 @@ const argvParser = function(process_argv){
         break;
 
         default:
-        printHowToUse(process_argv);
         obj.ok = false;
         break;
 	}
@@ -147,7 +146,7 @@ const checkArgs = function(obj){
 			obj.n = null;
 			obj.ok = false;
 		}
-		if( !(validator.isIP(obj.addr) || validator.isURL(obj.addr))){
+		if( !(validator.isIP(obj.addr) || validator.isURL(obj.addr) || obj.addr.toLowerCase() == "localhost") ){
 			obj.addr = null;
 			obj.ok = false;
 		}
