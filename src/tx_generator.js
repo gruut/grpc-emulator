@@ -39,25 +39,24 @@ var TXPackageDefinition = protoLoader.loadSync(
 );
 
 var proto_tx = grpc.loadPackageDefinition(TXPackageDefinition).grpc_se;
-
 var client = null;
-var p_num = 0;
 var txid = 0;
 
-
 /**
- * Starts client - the signer
+ * Starts tx_generator
  */
 function main() {
-     
-    //const REMOTE_SERVER = '165.246.196.48:50051';
-    const REMOTE_SERVER = '10.10.10.117:50051';
+    argv = tools.argvParser(process.argv);
+    if( !argv.ok) {
+		tools.printHowToUse(process_argv);
+		return false;
+	}
+
+    const REMOTE_SERVER = argv.addr + ":" + argv.port;
 	client = new proto_tx.GruutSeService(REMOTE_SERVER,
                                        grpc.credentials.createInsecure());
 
-	// stand by for the stream mode
-    var p_num = (process.argv.length == 3)? process.argv[2] : 0;
-    tx_send();
+    tx_send(argv.n);
 }
 
 main();
@@ -66,9 +65,8 @@ main();
 /**
  * Do Details
  */
-function tx_send() {
-	
-    var tx = genTx();
+function tx_send(p_num) {
+    var tx = genTx(p_num);
     logger.info(" req  #" + txid); 
     logger.info(JSON.stringify(tx));
 
@@ -78,12 +76,11 @@ function tx_send() {
         logger.debug("I got this res: " + JSON.stringify(res));
     });
 
-
 	setTimeout(tx_send, 2000);
 }
 
 
-function genTx(){
+function genTx(p_num){
     ++txid;
 
     let rID = tools.get64Hash("TX GENERATOR # " + p_num );

@@ -48,12 +48,20 @@ var signers = [];
  * sample server port
  */
 function main() {
+	argv = tools.argvParser(process.argv);
+    if( !argv.ok) {
+		tools.printHowToUse(process_argv);
+		return false;
+	}
+
+	const SERVER_BIND_INFO = argv.addr + ":" + argv.port;
+
 	var server = new grpc.Server();
 	server.addService(proto_pull_merger.Pulling.service, { join: join
 														 , sigSend: collectSignature
 														});
 	// how to create secure credentials?
-	server.bind('0.0.0.0:50051', grpc.ServerCredentials.createInsecure());
+	server.bind(SERVER_BIND_INFO, grpc.ServerCredentials.createInsecure());
 	server.start();
 }
 

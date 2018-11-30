@@ -48,13 +48,17 @@ var passport = null;
  * Starts client - the signer
  */
 function main() {
-	const REMOTE_SERVER = '165.246.196.48:50051';
+	argv = tools.argvParser(process.argv);
+    if( !argv.ok) {
+		tools.printHowToUse(process_argv);
+		return false;
+	}
+
+    const REMOTE_SERVER = argv.addr + ":" + argv.port;
 	client = new proto_pull_merger.Pulling(REMOTE_SERVER,
                                        grpc.credentials.createInsecure());
 
-	// stand by for the stream mode
-	var p_num = (process.argv.length == 3)? process.argv[2] : 0;
-	standBy(client, p_num);
+	standBy(client, argv.n);
 }
 
 main();
