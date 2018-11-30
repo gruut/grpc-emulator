@@ -1,0 +1,27 @@
+{
+  "name": "grpc-emulator",
+  "version": "1.0.0",
+  "description": "nodejs로 만든 네트워크 에뮬레이터입니다. [grpc nodejs 빠른 시작](https://grpc.io/docs/quickstart/node.html) 위 페이지를 참고해서 프로젝트를 구성했다면, ``` (grpc_home)/examples/node/ ``` 디렉토리로 이동한 뒤 이 저장소를 clone하세요. 이 저장소는 grpc 프로젝트의 submodule이므로 아래 명령어로 추가해야 합니다. 디렉토리명은 `emu` 입니다. ``` git submodule add git@gitlab.com:gruut/grcp-emu.git emu ``` emu 디렉토리는 src와 protos로 나뉩니다. ``` $ tree . ├ protos │   └ dos_hello.proto └ src     └ dos_greeter_client.js ```",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gruut/grpc-emulator.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gruut/grpc-emulator/issues"
+  },
+  "homepage": "https://github.com/gruut/grpc-emulator#readme",
+  "dependencies": {
+    "@grpc/proto-loader": "^0.3.0",
+    "date-utils": "^1.2.21",
+    "grpc": "^1.17.0-pre1",
+    "lz4": "^0.6.0",
+    "protobufjs": "^6.8.8",
+    "winston": "^3.1.0"
+  }
+}
