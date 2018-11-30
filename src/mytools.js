@@ -108,6 +108,7 @@ const publicKey = '-----BEGIN PUBLIC KEY-----\n'+
 't4KUcQ1TaazB8TzhqwIDAQAB\n'+
 '-----END PUBLIC KEY-----';
 
+// check out this https://nodejs.org/api/crypto.html#crypto_class_sign
 const signRSA = function(data){
 	var signer = crypto.createSign('sha256');
 	signer.update(data);

@@ -149,11 +149,41 @@ const protobuf_msg_serializer = function(PROTO_PATH, msg_type_name, packed_msg){
 	return serialized_msg;
 };
 
+const txToBuffer = function(tx){
+	let length = 0;
+	let bf_list = [];
+
+	length = pushBufferList(bf_list, length, Buffer.from(tx.txid, 'base64'));
+	length = pushBufferList(bf_list, length, getBufferedTimestamp(tx.time));
+	length = pushBufferList(bf_list, length, Buffer.from(tx.rID, 'base64'));
+	length = pushBufferList(bf_list, length, Buffer.from(tx.type));
+	for (let i=0; i<tx.content.length; i++){
+		length = pushBufferList(bf_list, length, Buffer.from(tx.content[i]));
+	}
+
+	const bf_combined = Buffer.concat(bf_list, length);
+	return bf_combined;
+}
+
+const getBufferedTimestamp = function(str_timestamp){
+	const bf_time = Buffer.allocUnsafe(8);
+	bf_time.writeInt32BE(0x0, 0);
+	bf_time.writeInt32BE(parseInt(str_timestamp, 10), 4);
+	return bf_time;
+}
+
+const pushBufferList = function(bf_list, length, single_buffer){
+	bf_list.push(single_buffer);
+	length += single_buffer.length;
+	return length;
+}
+
 const self = module.exports = {
 	pack : pack,
 	unpack : unpack,
 	zipIt : zipIt,
 	unzipIt : unzipIt,
 	protobuf_msg_serializer : protobuf_msg_serializer,
-	MSG_TYPE : MSG_TYPE
+	MSG_TYPE : MSG_TYPE,
+	txToBuffer : txToBuffer
 };
