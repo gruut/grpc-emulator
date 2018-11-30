@@ -79,20 +79,22 @@ function tx_send(p_num) {
 	setTimeout(tx_send, 2000);
 }
 
-
 function genTx(p_num){
     ++txid;
 
     let rID = tools.get64Hash("TX GENERATOR # " + p_num );
     let ts = tools.getTimestamp();
 
-    var tx = new Object();
+    var tx = {};
 	tx.txid = tools.getSHA256(rID + txid);
     tx.time = ts;
     tx.rID = rID;
     tx.type = "digests";
     tx.content = genContents(rID, ts);
-    tx.rSig = tools.signRSA(JSON.stringify(tx.content));
+
+    let bf_tx = common.txToBuffer(tx);
+    let rSig = tools.signRSA(bf_tx);
+    tx.rSig = rSig;
 
 	return tx;
 }
