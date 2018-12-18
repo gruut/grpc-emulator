@@ -48,7 +48,7 @@ var txid = 0;
 function main() {
     argv = tools.argvParser(process.argv);
     if( !argv.ok) {
-		tools.printHowToUse(process_argv);
+		tools.printHowToUse();
 		return false;
 	}
 
