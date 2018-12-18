@@ -1,5 +1,7 @@
 # emulator with nodejs
 * nodejs로 만든 grcp 네트워크 에뮬레이터입니다.
+- 현재는 tx generator만 사용됩니다.
+- merger, signer는 바이트핸들링 참고용으로만 남겨둡니다.
 * [grpc nodejs 빠른 시작](https://grpc.io/docs/quickstart/node.html)
 * 디렉토리 구조는 다음과 같습니다.
 ```
@@ -30,19 +32,19 @@ npm install
 
 ### merger 실행
 ```
-node merger.js addr port
+~~node merger.js addr port~~
 ```
 
 ### signer 실행
 ```
-node signer.js addr port n(signer number, optional)
+~~node signer.js addr port n(signer number, optional)~~
 ```
 
 - merger와 signer는 grpc를 이용하여 byte encoded data를 송수신합니다.
 
 ### tx_generator 실행
 ```
-node tx_generator.js addr port n(tx emulator number, optional)
+npm run txgen address port n(tx emulator number, optional)
 ```
 - tx generator는 SE의 트랜잭션을 에뮬레이션합니다.
 - tx generator의 RSA 서명키는 하드코딩되어있습니다.
