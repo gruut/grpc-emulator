@@ -126,7 +126,7 @@ const headerChainId = function (id){
 };
 
 const headerSender = function (sender_id){
-	if (sender_id.length > 16) return null;
+	if (sender_id.length > 8) return null;
 
 	return new Buffer.from(sender_id, 'hex');
 };
@@ -155,7 +155,7 @@ const txToBuffer = function(tx){
 
 	length = pushBufferList(bf_list, length, Buffer.from(tx.txid, 'base64'));
 	length = pushBufferList(bf_list, length, getBufferedTimestamp(tx.time));
-	length = pushBufferList(bf_list, length, Buffer.from(tx.rID, 'base64'));
+	length = pushBufferList(bf_list, length, Buffer.from(tx.rID));
 	length = pushBufferList(bf_list, length, Buffer.from(tx.type));
 	for (let i=0; i<tx.content.length; i++){
 		length = pushBufferList(bf_list, length, Buffer.from(tx.content[i]));

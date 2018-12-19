@@ -65,35 +65,38 @@ main();
 /**
  * Do Details
  */
-function tx_send(p_num) {
-    var tx = genTx(p_num);
+function tx_send(se_num) {
+    var tx = genTx(se_num);
     logger.info(" req  #" + txid); 
     logger.info(JSON.stringify(tx));
 
-    var tx_pack = common.pack(common.MSG_TYPE.MSG_TX, tx, tx.rID);
+    // SEID: txbody에는 base64인코딩으로, 헤더에는 64bit바이너리로 사용
+    var tx_pack = common.pack(common.MSG_TYPE.MSG_TX, tx, tools.getSEID(se_num));
     const msg = common.protobuf_msg_serializer(TX_PROTO_PATH, "grpc_se.GrpcMsgTX", tx_pack);
     client.transaction(msg, res => {
         logger.debug("I got this res: " + JSON.stringify(res));
     });
 
-	setTimeout(tx_send, 2000);
+	setTimeout(function(){tx_send(se_num);}, 2000);
 }
 
-function genTx(p_num){
+function genTx(se_num){
     ++txid;
 
-    let rID = tools.get64Hash("TX GENERATOR # " + p_num );
+    let rID = tools.getSEID(se_num);
     let ts = tools.getTimestamp();
 
     var tx = {};
 	tx.txid = tools.getSHA256(rID + txid);
     tx.time = ts;
     tx.rID = rID;
-    tx.type = "digests";
+    tx.type = "DIGESTS";
     tx.content = genContents(rID, ts);
 
     let bf_tx = common.txToBuffer(tx);
     let rSig = tools.signRSA(bf_tx);
+
+    tx.rID = Buffer.from(rID).toString('base64');
     tx.rSig = rSig;
 
 	return tx;

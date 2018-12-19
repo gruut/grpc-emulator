@@ -84,6 +84,10 @@ var getRandomBetween = function(min, max){
 	return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
+var getSEID = function(id){
+	return "GENTSE-" + id ;
+};
+
 // I got this from https://stackoverflow.com/questions/25006460/cant-verify-signature-witn-node-js-crypto-using-key-pairs
 const privateKey = '-----BEGIN PRIVATE KEY-----\n\
 MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDMBQUNCNMLLsb9\
@@ -158,7 +162,7 @@ const argvParser = function(process_argv){
 		obj.n = process_argv[4];
 
 		case 4:
-		obj.n = (obj.n)? obj.n : 0;
+		obj.n = (obj.n)? obj.n : 1;
         obj.addr = process_argv[2];
 		obj.port = process_argv[3];
 		obj.ok = true;
@@ -199,7 +203,7 @@ const printHowToUse = function(){
 	console.log ("- [script_name] should be one of these [merger, signer, tx_generator]");
 	console.log ("- [ip_or_addr] should be a valid form of IP or URL ");
 	console.log ("- [port] should be a number less than 65535");
-	console.log ("- [emulator_id](Optional) should be a number");
+	console.log ("- [se_id] should be a number (default: 1)");
 };
 
 var self = module.exports = {
@@ -212,5 +216,6 @@ var self = module.exports = {
 	signRSA : signRSA,
 	getTimestamp : getTimestamp,
 	argvParser : argvParser,
-	printHowToUse: printHowToUse
+	printHowToUse: printHowToUse,
+	getSEID : getSEID
 };
