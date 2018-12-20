@@ -44,7 +44,7 @@ npm install
 
 ### tx_generator 실행
 ```
-npm run txgen address port n(tx emulator number, optional)
+npm run txgen address port n(se emulator number, default: 1)
 ```
 - tx generator는 SE의 트랜잭션을 에뮬레이션합니다.
 - tx generator의 RSA 서명키는 하드코딩되어있습니다.

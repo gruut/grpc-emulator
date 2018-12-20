@@ -126,7 +126,7 @@ const headerChainId = function (id){
 };
 
 const headerSender = function (sender_id){
-	if (sender_id.length > 16) return null;
+	if (sender_id.length > 8) return null;
 
 	return new Buffer.from(sender_id, 'hex');
 };
@@ -149,14 +149,14 @@ const protobuf_msg_serializer = function(PROTO_PATH, msg_type_name, packed_msg){
 	return serialized_msg;
 };
 
-const txToBuffer = function(tx){
+const buildSigBuffer = function(tx){
 	let length = 0;
 	let bf_list = [];
 
-	length = pushBufferList(bf_list, length, Buffer.from(tx.txid, 'base64'));
+	length = pushBufferList(bf_list, length, Buffer.from(tx.txid, 'base64')); // b64 to buf
 	length = pushBufferList(bf_list, length, getBufferedTimestamp(tx.time));
-	length = pushBufferList(bf_list, length, Buffer.from(tx.rID, 'base64'));
-	length = pushBufferList(bf_list, length, Buffer.from(tx.type));
+	length = pushBufferList(bf_list, length, Buffer.from(tx.rID));  // str to buf
+	length = pushBufferList(bf_list, length, Buffer.from(tx.type)); // str to buf 
 	for (let i=0; i<tx.content.length; i++){
 		length = pushBufferList(bf_list, length, Buffer.from(tx.content[i]));
 	}
@@ -185,5 +185,5 @@ const self = module.exports = {
 	unzipIt : unzipIt,
 	protobuf_msg_serializer : protobuf_msg_serializer,
 	MSG_TYPE : MSG_TYPE,
-	txToBuffer : txToBuffer
+	buildSigBuffer : buildSigBuffer
 };

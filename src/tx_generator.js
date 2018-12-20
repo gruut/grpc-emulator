@@ -40,7 +40,7 @@ var TXPackageDefinition = protoLoader.loadSync(
 
 var proto_tx = grpc.loadPackageDefinition(TXPackageDefinition).grpc_se;
 var client = null;
-var txid = 0;
+var n_tx = 0;
 
 /**
  * Starts tx_generator
@@ -65,41 +65,46 @@ main();
 /**
  * Do Details
  */
-function tx_send(p_num) {
-    var tx = genTx(p_num);
-    logger.info(" req  #" + txid); 
+function tx_send(se_num) {
+    var tx = genTx(se_num);
+    logger.info(" req  #" + n_tx);
     logger.info(JSON.stringify(tx));
 
-    var tx_pack = common.pack(common.MSG_TYPE.MSG_TX, tx, tx.rID);
+    // SEID: txbody에는 base64인코딩으로, 헤더에는 64bit바이너리로 사용
+    var tx_pack = common.pack(common.MSG_TYPE.MSG_TX, tx, tools.getSEID(se_num));
     const msg = common.protobuf_msg_serializer(TX_PROTO_PATH, "grpc_se.GrpcMsgTX", tx_pack);
     client.transaction(msg, res => {
         logger.debug("I got this res: " + JSON.stringify(res));
     });
 
-	setTimeout(tx_send, 2000);
+	setTimeout(function(){tx_send(se_num);}, 100);
 }
 
-function genTx(p_num){
-    ++txid;
+function genTx(se_num){
+    ++n_tx;
 
-    let rID = tools.get64Hash("TX GENERATOR # " + p_num );
+    let rID = tools.getSEID(se_num);
     let ts = tools.getTimestamp();
+    let cID = "Client #" + n_tx; // random client ID
 
     var tx = {};
-	tx.txid = tools.getSHA256(rID + txid);
+    tx.txid = tools.getSHA256(rID + n_tx);
     tx.time = ts;
     tx.rID = rID;
-    tx.type = "digests";
-    tx.content = genContents(rID, ts);
+    tx.type = "DIGESTS";
+    tx.content = genContents(cID, ts);
 
-    let bf_tx = common.txToBuffer(tx);
+    let bf_tx = common.buildSigBuffer(tx);
     let rSig = tools.signRSA(bf_tx);
+
+    //string rID to base64
+    tx.rID = Buffer.from(rID).toString('base64');
     tx.rSig = rSig;
 
 	return tx;
 }
 
-function genContents(rID, ts){
+function genContents(cID, ts){
     let contents = [];
     let n = tools.getRandomBetween(0,10);
     let item;
@@ -109,21 +114,21 @@ function genContents(rID, ts){
         case 3:
         case 10:
         for(i=0; i<n; i++){
-            addSingleContent(contents, rID, ts, i);
+            addSingleContent(contents, cID, ts, i);
         }
         break;
         default:
-            addSingleContent(contents, rID, ts, 0);
+            addSingleContent(contents, cID, ts, 0);
         break;
     }
 
     return contents;
 }
 
-function addSingleContent(contents, rID, ts, n){
-    let data = "Data #" + txid + ((n==0)? "" : "-" + n);
-    let dataID = tools.get64Hash(data + txid);
-    contents.push(rID);
+function addSingleContent(contents, cID, ts, n){
+    let data = "Data #" + n_tx + ((n==0)? "" : "-" + n);
+    let dataID = tools.get64Hash(data + n_tx);
+    contents.push(cID);
     contents.push(ts);
     contents.push(dataID);
     contents.push(data);
