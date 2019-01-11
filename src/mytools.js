@@ -7,6 +7,7 @@ require('date-utils');
 const fs = require('fs');
 var crypto = require('crypto');
 var validator = require('validator');
+var secureRandom = require('secure-random');
 
 // https://stackoverflow.com/questions/32131287/how-do-i-change-my-node-winston-json-output-to-be-single-line
 var getLogger = function(type_name){
@@ -87,6 +88,11 @@ var getRandomBetween = function(min, max){
 var getSEID = function(id){
 	return "GENTSE-" + id ;
 };
+
+var getRandomBase64 = function(length){
+    var r = secureRandom(length, {type: 'Buffer'});
+    return Buffer.from(r).toString('base64');
+}
 
 // I got this from https://stackoverflow.com/questions/25006460/cant-verify-signature-witn-node-js-crypto-using-key-pairs
 const privateKey = '-----BEGIN PRIVATE KEY-----\n\
@@ -217,5 +223,6 @@ var self = module.exports = {
 	getTimestamp : getTimestamp,
 	argvParser : argvParser,
 	printHowToUse: printHowToUse,
-	getSEID : getSEID
+	getSEID : getSEID,
+	getRandomBase64 : getRandomBase64
 };

@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "txgen" : "node src/tx_generator.js"
+    "txgen": "node src/tx_generator.js"
   },
   "repository": {
     "type": "git",
@@ -23,6 +23,7 @@
     "grpc": "^1.17.0-pre1",
     "lz4": "^0.6.0",
     "protobufjs": "^6.8.8",
+    "secure-random": "^1.1.1",
     "validator": "^10.9.0",
     "winston": "^3.1.0"
   }
