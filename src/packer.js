@@ -1,5 +1,5 @@
 /**
- * Common functions
+ * packer functions
  */
 // all about buffer encoding!
 // https://nodejs.org/docs/latest/api/buffer.html#buffer_class_method_buffer_from_string_encoding
