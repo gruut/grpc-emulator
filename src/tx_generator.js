@@ -20,7 +20,7 @@
 var grpc = require('grpc');
 var protoLoader = require('@grpc/proto-loader');
 var tools = require("./mytools.js");
-var common = require("./common.js");
+var packer = require("./packer.js");
 var logger = tools.getLogger('signer');
 
 var TX_PROTO_PATH = __dirname + '/../protos/tx.proto';
@@ -39,24 +39,36 @@ var TXPackageDefinition = protoLoader.loadSync(
 );
 
 var proto_tx = grpc.loadPackageDefinition(TXPackageDefinition).grpc_se;
-var client = null;
-var n_tx = 0;
 
 /**
- * Starts tx_generator
+ * 전역변수 모음
+ */
+var tx_senders = [];
+var n_tx = 0;
+const TPS = 100;
+const REPEAT_AFTER = 1000/TPS;
+const Mergers = ['13.125.161.227', '13.125.84.32', '13.209.158.245'];
+
+
+/**
+ * Start tx_generator
  */
 function main() {
     argv = tools.argvParser(process.argv);
     if( !argv.ok) {
-		tools.printHowToUse();
-		return false;
-	}
+        tools.printHowToUse();
+        return false;
+    }
 
-    const REMOTE_SERVER = argv.addr + ":" + argv.port;
-	client = new proto_tx.GruutSeService(REMOTE_SERVER,
-                                       grpc.credentials.createInsecure());
+    // ignore argv.addr since Merger IPs fixed
+    // TO DO:: make a config file which contains Merger IPs and the port
+    for (var i=0; i<Mergers.length; i++) {
+        var REMOTE_SERVER = Mergers[i] + ":" + argv.port;
+        tx_senders.push(new proto_tx.GruutSeService(REMOTE_SERVER,
+        grpc.credentials.createInsecure()));
+    }
 
-    tx_send(argv.n);
+    tx_broadcast(argv.n);
 }
 
 main();
@@ -65,19 +77,20 @@ main();
 /**
  * Do Details
  */
-function tx_send(se_num) {
+function tx_broadcast(se_num) {
     var tx = genTx(se_num);
-    logger.info(" req  #" + n_tx);
-    logger.info(JSON.stringify(tx));
+    logger.info(" [req #" + n_tx) + "]";
 
     // SEID: txbody에는 base64인코딩으로, 헤더에는 64bit바이너리로 사용
-    var tx_pack = common.pack(common.MSG_TYPE.MSG_TX, tx, tools.getSEID(se_num));
-    const msg = common.protobuf_msg_serializer(TX_PROTO_PATH, "grpc_se.GrpcMsgTX", tx_pack);
-    client.transaction(msg, res => {
-        logger.debug("I got this res: " + JSON.stringify(res));
-    });
+    var tx_pack = packer.pack(packer.MSG_TYPE.MSG_TX, tx, tools.getSEID(se_num));
+    const msg = packer.protobuf_msg_serializer(TX_PROTO_PATH, "grpc_se.GrpcMsgTX", tx_pack);
+    for(var i=0; i<tx_senders.length; i++){
+        tx_senders[i].transaction(msg, res => {
+            logger.debug(" [res #" + n_tx +"] " + JSON.stringify(res));
+        });
+    }
 
-	setTimeout(function(){tx_send(se_num);}, 100);
+	setTimeout(function(){ tx_broadcast(se_num); }, REPEAT_AFTER);
 }
 
 function genTx(se_num){
@@ -88,13 +101,14 @@ function genTx(se_num){
     let cID = "Client #" + n_tx; // random client ID
 
     var tx = {};
-    tx.txid = tools.getSHA256(rID + n_tx);
+    //tx.txid = tools.getSHA256(rID + n_tx); // 별로 랜덤하지 않음
+    tx.txid = tools.getSHA256(rID + n_tx );
     tx.time = ts;
     tx.rID = rID;
     tx.type = "DIGESTS";
     tx.content = genContents(cID, ts);
 
-    let bf_tx = common.buildSigBuffer(tx);
+    let bf_tx = packer.buildSigBuffer(tx);
     let rSig = tools.signRSA(bf_tx);
 
     //string rID to base64
