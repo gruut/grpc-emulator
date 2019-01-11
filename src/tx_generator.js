@@ -22,7 +22,6 @@ var protoLoader = require('@grpc/proto-loader');
 var tools = require("./mytools.js");
 var packer = require("./packer.js");
 var logger = tools.getLogger('signer');
-
 var TX_PROTO_PATH = __dirname + '/../protos/tx.proto';
 
 // hello world에 있길래 사용함.
@@ -101,8 +100,7 @@ function genTx(se_num){
     let cID = "Client #" + n_tx; // random client ID
 
     var tx = {};
-    //tx.txid = tools.getSHA256(rID + n_tx); // 별로 랜덤하지 않음
-    tx.txid = tools.getSHA256(rID + n_tx );
+    tx.txid = tools.getRandomBase64(32);
     tx.time = ts;
     tx.rID = rID;
     tx.type = "DIGESTS";
@@ -141,7 +139,7 @@ function genContents(cID, ts){
 
 function addSingleContent(contents, cID, ts, n){
     let data = "Data #" + n_tx + ((n==0)? "" : "-" + n);
-    let dataID = tools.get64Hash(data + n_tx);
+    let dataID = tools.getRandomBase64(8);
     contents.push(cID);
     contents.push(ts);
     contents.push(dataID);
