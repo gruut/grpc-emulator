@@ -100,14 +100,14 @@ function genTx(se_num){
     let cID = "Client #" + n_tx; // random client ID
 
     var tx = {};
-    tx.txid = tools.getRandomBase64(32);
     tx.time = ts;
     tx.rID = rID;
     tx.type = "DIGESTS";
     tx.content = genContents(cID, ts);
+	tx.txid = packer.txidBuilder(tx);
 
     let bf_tx = packer.buildSigBuffer(tx);
-    let rSig = tools.signRSA(bf_tx);
+    let rSig = tools.doSign(bf_tx);
 
     //string rID to base64
     tx.rID = Buffer.from(rID).toString('base64');

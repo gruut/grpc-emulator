@@ -149,6 +149,21 @@ const protobuf_msg_serializer = function(PROTO_PATH, msg_type_name, packed_msg){
 	return serialized_msg;
 };
 
+const txidBuilder = function(tx){
+		let length = 0;
+	let bf_list = [];
+
+	length = pushBufferList(bf_list, length, getBufferedTimestamp(tx.time));
+	length = pushBufferList(bf_list, length, Buffer.from(tx.rID));  // str to buf
+	length = pushBufferList(bf_list, length, Buffer.from(tx.type)); // str to buf 
+	for (let i=0; i<tx.content.length; i++){
+		length = pushBufferList(bf_list, length, Buffer.from(tx.content[i]));
+	}
+
+	const bf_combined = Buffer.concat(bf_list, length);
+	return bf_combined;
+}
+
 const buildSigBuffer = function(tx){
 	let length = 0;
 	let bf_list = [];
@@ -185,5 +200,6 @@ const self = module.exports = {
 	unzipIt : unzipIt,
 	protobuf_msg_serializer : protobuf_msg_serializer,
 	MSG_TYPE : MSG_TYPE,
-	buildSigBuffer : buildSigBuffer
+	buildSigBuffer : buildSigBuffer,
+	txidBuilder : txidBuilder
 };
