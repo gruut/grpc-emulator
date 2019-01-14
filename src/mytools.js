@@ -95,7 +95,7 @@ var getRandomBase64 = function(length){
 }
 
 // I got this from https://stackoverflow.com/questions/25006460/cant-verify-signature-witn-node-js-crypto-using-key-pairs
-const privateKey = -----'BEGIN PRIVATE KEY-----\n\
+const privateKey = '-----BEGIN PRIVATE KEY-----\n\
 MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg7FRsKBgWYvZWq2uH\n\
 qgQQLqZwcitCIIjhrxKCctYTFPihRANCAATGyY6HQXytuVdc8EQNCYeDE6/QaDVK\n\
 EaNfdBuGtFe47Nevh/u40ZNBcuP4t9/RNBLTVssjS9E8Lc7TA5Rc7ZHp\n\
@@ -192,7 +192,7 @@ var self = module.exports = {
 	get64Hash : get64Hash,
 	get32Hash : get32Hash,
 	getRandomBetween : getRandomBetween,
-	signRSA : signRSA,
+	doSign : doSign,
 	getTimestamp : getTimestamp,
 	argvParser : argvParser,
 	printHowToUse: printHowToUse,
