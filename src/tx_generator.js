@@ -46,7 +46,7 @@ var tx_senders = [];
 var n_tx = 0;
 const TPS = 100;
 const REPEAT_AFTER = 1000/TPS;
-const Mergers = ['13.125.161.227', '13.125.84.32', '13.209.158.245'];
+const Mergers = ['127.0.0.1'];
 
 
 /**
@@ -138,8 +138,8 @@ function genContents(cID, ts){
 }
 
 function addSingleContent(contents, cID, ts, n){
-    let data = "Data #" + n_tx + ((n==0)? "" : "-" + n);
-    let dataID = tools.getRandomBase64(8);
+    let dataID = "D#" + n_tx + ((n==0)? "" : "-" + n);
+    let data = tools.getRandomBase64(32);
     contents.push(cID);
     contents.push(ts);
     contents.push(dataID);

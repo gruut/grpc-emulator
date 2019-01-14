@@ -160,7 +160,7 @@ const txidBuilder = function(tx){
 		length = pushBufferList(bf_list, length, Buffer.from(tx.content[i]));
 	}
 
-	const bf_combined = Buffer.concat(bf_list, length);
+	const bf_combined = tools.getSHA256(Buffer.concat(bf_list, length));
 	return bf_combined;
 }
 
