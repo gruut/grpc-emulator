@@ -82,9 +82,9 @@ function tx_broadcast(se_num) {
 
     // SEID: txbody에는 base64인코딩으로, 헤더에는 64bit바이너리로 사용
     var tx_pack = packer.pack(packer.MSG_TYPE.MSG_TX, tx, tools.getSEID(se_num));
-    const msg = packer.protobuf_msg_serializer(TX_PROTO_PATH, "grpc_se.GrpcMsgTX", tx_pack);
+    const msg = packer.protobuf_msg_serializer(TX_PROTO_PATH, "grpc_se.Request", tx_pack);
     for(var i=0; i<tx_senders.length; i++){
-        tx_senders[i].transaction(msg, res => {
+         tx_senders[i].seService(msg, res => {
 			//process.stdout.write(".");
             logger.debug(" [res #" + n_tx +"] " + JSON.stringify(res));
         });
