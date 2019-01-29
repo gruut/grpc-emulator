@@ -44,9 +44,9 @@ var proto_tx = grpc.loadPackageDefinition(TXPackageDefinition).grpc_se;
  */
 var tx_senders = [];
 var n_tx = 0;
-const TPS = 100;
+const TPS = 2;
 const REPEAT_AFTER = 1000/TPS;
-const Mergers = ['127.0.0.1'];
+const Mergers = ['165.246.42.47:50051','165.246.42.47:50052','165.246.42.47:50053','165.246.42.47:50054'];
 
 
 /**
@@ -62,7 +62,7 @@ function main() {
     // ignore argv.addr since Merger IPs fixed
     // TO DO:: make a config file which contains Merger IPs and the port
     for (var i=0; i<Mergers.length; i++) {
-        var REMOTE_SERVER = Mergers[i] + ":" + argv.port;
+        var REMOTE_SERVER = Mergers[i] ;
         tx_senders.push(new proto_tx.GruutSeService(REMOTE_SERVER,
         grpc.credentials.createInsecure()));
     }
@@ -82,9 +82,9 @@ function tx_broadcast(se_num) {
 
     // SEID: txbody에는 base64인코딩으로, 헤더에는 64bit바이너리로 사용
     var tx_pack = packer.pack(packer.MSG_TYPE.MSG_TX, tx, tools.getSEID(se_num));
-    const msg = packer.protobuf_msg_serializer(TX_PROTO_PATH, "grpc_se.GrpcMsgTX", tx_pack);
+    const msg = packer.protobuf_msg_serializer(TX_PROTO_PATH, "grpc_se.Request", tx_pack);
     for(var i=0; i<tx_senders.length; i++){
-        tx_senders[i].transaction(msg, res => {
+        tx_senders[i].seService(msg, res => {
             logger.debug(" [res #" + n_tx +"] " + JSON.stringify(res));
         });
     }
