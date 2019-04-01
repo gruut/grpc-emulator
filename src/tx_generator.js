@@ -44,9 +44,9 @@ var proto_tx = grpc.loadPackageDefinition(TXPackageDefinition).grpc_se;
  */
 var tx_senders = [];
 var n_tx = 0;
-const TPS = 100;
+const TPS = 10;
 const REPEAT_AFTER = 1000/TPS;
-const Mergers = ['127.0.0.1'];
+const Mergers = ['13.125.161.227:50000', '13.125.84.32:50000', '13.209.158.245:50000'];
 
 
 /**
@@ -62,7 +62,7 @@ function main() {
     // ignore argv.addr since Merger IPs fixed
     // TO DO:: make a config file which contains Merger IPs and the port
     for (var i=0; i<Mergers.length; i++) {
-        var REMOTE_SERVER = Mergers[i] + ":" + argv.port;
+        var REMOTE_SERVER = Mergers[i];
         tx_senders.push(new proto_tx.GruutSeService(REMOTE_SERVER,
         grpc.credentials.createInsecure()));
     }
@@ -86,7 +86,7 @@ function tx_broadcast(se_num) {
     for(var i=0; i<tx_senders.length; i++){
          tx_senders[i].seService(msg, res => {
 			//process.stdout.write(".");
-            logger.debug(" [res #" + n_tx +"] " + JSON.stringify(res));
+            //logger.debug(" [res #" + n_tx +"] " + JSON.stringify(res));
         });
     }
 
